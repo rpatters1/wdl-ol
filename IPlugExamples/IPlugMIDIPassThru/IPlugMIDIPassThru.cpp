@@ -6,6 +6,9 @@
 #include "IKeyboardControl.h"
 
 #include <Cocoa/Cocoa.h>
+#include <CoreAudio/CoreAudio.h>
+
+#include <vector>
 
 
 const int kNumPrograms = 8;
@@ -189,9 +192,27 @@ void IPlugMIDIPassThru::ProcessDoubleReplacing(double** inputs, double** outputs
 
       // TODO: make this work on win sa
 #if !defined(OS_WIN) && !defined(SA_API)
-      SendMidiMsg(pMsg);
+//      SendMidiMsg(pMsg);
 #endif
+      
+      std::vector<unsigned char> message;
+      message.push_back( pMsg->mStatus );
+      message.push_back( pMsg->mData1 );
+      message.push_back( pMsg->mData2 );
 
+      MIDIPacketList packetList;
+      MIDIPacket *packet = MIDIPacketListInit( &packetList );
+      packet = MIDIPacketListAdd( &packetList, sizeof(packetList), packet, AudioGetCurrentHostTime(), message.size(), (const Byte *) &message.at( 0 ) );
+
+      if ( packet )
+      {
+          OSStatus result = MIDISend( mMIDIPort, mMIDIEndPoint, &packetList );
+          if ( result )
+            NSLog(@"MIDISend returned result: %x", (int)result);
+          else
+            NSLog(@"MIDISend succeded");
+      }
+/*
       int status = pMsg->StatusMsg();
 
       switch (status)
@@ -218,7 +239,7 @@ void IPlugMIDIPassThru::ProcessDoubleReplacing(double** inputs, double** outputs
           break;
         }
       }
-
+*/
       mMidiQueue.Remove();
     }
 
