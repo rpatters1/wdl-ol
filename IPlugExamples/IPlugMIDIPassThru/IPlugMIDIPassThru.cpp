@@ -6,7 +6,7 @@
 #include "IKeyboardControl.h"
 
 #include <Cocoa/Cocoa.h>
-#include <CoreAudio/CoreAudio.h>
+#include <CoreMidi/CoreMidi.h>
 
 #include <vector>
 
@@ -28,8 +28,8 @@ enum EParams
 };
 
 NSString *getDisplayName(MIDIObjectRef object);
-MIDIEndpointRef MellotronRef();
-MIDIEndpointRef MellotronRef()
+int MellotronRef();
+int MellotronRef()
 {
   NSLog(@"Iterate through destinations");
   ItemCount destCount = MIDIGetNumberOfDestinations();
@@ -41,7 +41,7 @@ MIDIEndpointRef MellotronRef()
       NSString * displayName = getDisplayName(dest);
       NSLog(@"  Destination: %@", displayName);
       if ( [displayName isEqual: @"Mellotron"] )
-        return dest;
+        return i;
     }
   }
 
@@ -58,7 +58,7 @@ MIDIEndpointRef MellotronRef()
   }
  */
   
-  return NULL;
+  return -1;
 }
 
 NSString *getDisplayName(MIDIObjectRef object)
@@ -81,24 +81,11 @@ IPlugMIDIPassThru::IPlugMIDIPassThru(IPlugInstanceInfo instanceInfo)
     mNumKeys(0),
     mKey(-1),
     mPrevL(0.0),
-    mPrevR(0.0)
+    mPrevR(0.0),
+    mMidiOut("IPlugMIDIPassThru")
 
 {
-  
-  {
-    OSStatus result = MIDIClientCreate( CFStringCreateWithCString( NULL, "IPlugMIDIPassThru", kCFStringEncodingASCII ), NULL, NULL, &mMIDIClient );
-    if ( result != noErr ) {
-      mMIDIClient = NULL;
-    }
-  }
-  if ( mMIDIClient )
-  {
-    OSStatus result = MIDIOutputPortCreate( mMIDIClient, CFStringCreateWithCString( NULL, "IPlugMIDIPassThru", kCFStringEncodingASCII ), &mMIDIPort );
-    if ( result != noErr ) {
-      mMIDIPort = NULL;
-    }
-  }
-  mMIDIEndPoint = MellotronRef();
+  mMidiOut.openPort ( MellotronRef()) ;
 
   memset(mKeyStatus, 0, 128 * sizeof(bool));
 
@@ -138,17 +125,6 @@ IPlugMIDIPassThru::IPlugMIDIPassThru(IPlugInstanceInfo instanceInfo)
 
 IPlugMIDIPassThru::~IPlugMIDIPassThru()
 {
-  if ( mMIDIPort )
-  {
-    MIDIPortDispose ( mMIDIPort );
-    mMIDIPort = NULL;
-  }
-  
-  if ( mMIDIClient )
-  {
-    MIDIClientDispose ( mMIDIClient );
-    mMIDIClient = NULL;
-  }
 }
 
 void IPlugMIDIPassThru::ProcessDoubleReplacing(double** inputs, double** outputs, int nFrames)
@@ -199,19 +175,9 @@ void IPlugMIDIPassThru::ProcessDoubleReplacing(double** inputs, double** outputs
       message.push_back( pMsg->mStatus );
       message.push_back( pMsg->mData1 );
       message.push_back( pMsg->mData2 );
+      
+      mMidiOut.sendMessage ( &message );
 
-      MIDIPacketList packetList;
-      MIDIPacket *packet = MIDIPacketListInit( &packetList );
-      packet = MIDIPacketListAdd( &packetList, sizeof(packetList), packet, AudioGetCurrentHostTime(), message.size(), (const Byte *) &message.at( 0 ) );
-
-      if ( packet )
-      {
-          OSStatus result = MIDISend( mMIDIPort, mMIDIEndPoint, &packetList );
-          if ( result )
-            NSLog(@"MIDISend returned result: %x", (int)result);
-          else
-            NSLog(@"MIDISend succeded");
-      }
 /*
       int status = pMsg->StatusMsg();
 

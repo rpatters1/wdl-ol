@@ -3,7 +3,7 @@
 
 #include "IPlug_include_in_plug_hdr.h"
 #include "IMidiQueue.h"
-#include <CoreMIDI/CoreMIDI.h>
+#include "RtMidi.h"
 
 // http://www.musicdsp.org/archive.php?classid=3#257
 
@@ -58,9 +58,7 @@ private:
 
   CParamSmooth mGainLSmoother, mGainRSmoother;
   
-  MIDIClientRef mMIDIClient;
-  MIDIPortRef mMIDIPort;
-  MIDIEndpointRef mMIDIEndPoint;
+  RtMidiOut mMidiOut;
 };
 
 enum ELayout

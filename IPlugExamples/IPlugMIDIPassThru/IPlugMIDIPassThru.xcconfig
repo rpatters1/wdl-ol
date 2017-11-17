@@ -23,7 +23,7 @@ VST_DEFS = VST_API VST_FORCE_DEPRECATED
 VST3_DEFS = VST3_API
 
 // Preprocessor definitions for all AU builds
-AU_DEFS = AU_API
+AU_DEFS = AU_API __MACOSX_CORE__
 
 RTAS_DEFS = RTAS_API
 
