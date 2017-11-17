@@ -293,6 +293,22 @@ void IPlugMIDIPassThru::ProcessMidiMsg(IMidiMsg* pMsg)
   
   //mKeyboard->SetDirty();
   mMidiQueue.Add(pMsg);
+  
+  
+  /* if we ever make this a real AU plugin, there should be an option
+    that is set in the UI to control whether we send note off messages
+    on AllNotesOff . */
+  
+  int status = pMsg->StatusMsg();
+  if ( (status == IMidiMsg::kControlChange) && (pMsg->mData1 == IMidiMsg::kAllNotesOff) )
+  {
+    for ( int i = 0; i < 128; i++ )
+    {
+      IMidiMsg noteOff;
+      noteOff.MakeNoteOffMsg ( i, 0, pMsg->Channel() );
+      mMidiQueue.Add(&noteOff);
+    }
+  }
 }
 
 // Should return non-zero if one or more keys are playing.
