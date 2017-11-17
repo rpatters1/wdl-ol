@@ -381,6 +381,20 @@ struct IMidiMsg
   };
 
   IMidiMsg(int offs = 0, BYTE s = 0, BYTE d1 = 0, BYTE d2 = 0) : mOffset(offs), mStatus(s), mData1(d1), mData2(d2) {}
+   
+   bool UsesData2()
+   {
+      const EStatusMsg status = StatusMsg();
+      switch ( status )
+      {
+         case kProgramChange:
+         case kChannelAftertouch:
+            return false;
+            
+         default:
+            return true;
+      }
+   }
 
   void MakeNoteOnMsg(int noteNumber, int velocity, int offset, int channel=0);
   void MakeNoteOffMsg(int noteNumber, int offset, int channel=0);

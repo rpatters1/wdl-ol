@@ -174,7 +174,8 @@ void IPlugMIDIPassThru::ProcessDoubleReplacing(double** inputs, double** outputs
       std::vector<unsigned char> message;
       message.push_back( pMsg->mStatus );
       message.push_back( pMsg->mData1 );
-      message.push_back( pMsg->mData2 );
+      if ( pMsg->UsesData2() )
+        message.push_back( pMsg->mData2 );
       
       mMidiOut.sendMessage ( &message );
 
@@ -265,6 +266,7 @@ void IPlugMIDIPassThru::OnParamChange(int paramIdx)
 
 void IPlugMIDIPassThru::ProcessMidiMsg(IMidiMsg* pMsg)
 {
+  /*
   int status = pMsg->StatusMsg();
   int velocity = pMsg->Velocity();
 
@@ -287,8 +289,9 @@ void IPlugMIDIPassThru::ProcessMidiMsg(IMidiMsg* pMsg)
     default:
       return; // if !note message, nothing gets added to the queue
   }
-
-  mKeyboard->SetDirty();
+*/
+  
+  //mKeyboard->SetDirty();
   mMidiQueue.Add(pMsg);
 }
 
